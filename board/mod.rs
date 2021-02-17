@@ -19,14 +19,16 @@ impl Board {
     pub fn new() -> Self {
 
 
-        let first_rank = [Kind::Rook, Kind::Knight, Kind::Bishop, Kind::King, Kind::Queen, Kind::Bishop, Kind::Knight, Kind::Rook];
+        let first_rank = [Kind::Rook, Kind::Knight, Kind::Bishop, Kind::Queen, Kind::King, Kind::Bishop, Kind::Knight, Kind::Rook];
+
         let mut init_pieces = [None; 64];
 
+        // Initial position
         for i in 0..8 {
             init_pieces[i] = make_piece(Color::White, first_rank[i]);
-        }
-        for i in 8..16 {
-            init_pieces[i] = make_piece(Color::White, Kind::Pawn);
+            init_pieces[i+7*8] = make_piece(Color::Black, first_rank[i]);
+            init_pieces[i+8] = make_piece(Color::White, Kind::Pawn);
+            init_pieces[i+6*8] = make_piece(Color::Black, Kind::Pawn);
         }
 
         let board : Board  = Board {
@@ -39,7 +41,7 @@ impl Board {
     pub fn display(&self) {
 
 
-        // we start by the last rank
+        // we start displaying the last rank
         for rank in (0..8).rev() {
             for file in 0..8 {
 
@@ -48,8 +50,8 @@ impl Board {
                     // If there is no piece here
                     None => {
                         match (file+rank) % 2 {
-                            0 => "◻",
-                            1 => "◼",
+                            0 => "◼", // Even is dark (bottom corner is 0 -> dark)
+                            1 => "◻", // Odd is a light square
                             _ => "?"
                         }
                     }
@@ -66,9 +68,18 @@ impl Board {
                         }
                     }
 
-                    // If it's a black piece
-                    //TODO
-                    _ => "?"
+                    // If it's some black piece
+                    Some(Piece { color: Color::Black, kind: k }) => {
+                        match k {
+                            Kind::Pawn => "♟",
+                            Kind::Knight => "♞",
+                            Kind::Bishop => "♝",
+                            Kind::Rook => "♜",
+                            Kind::King => "♚",
+                            Kind::Queen => "♛",
+                        }
+                    }
+
                 };
 
                 print!("{} ", square);
