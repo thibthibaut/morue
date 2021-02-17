@@ -1,6 +1,5 @@
 #[derive(Copy, Clone)]
-pub enum PieceKind {
-    None,
+pub enum Kind {
     Pawn,
     Knight,
     Bishop,
@@ -10,14 +9,13 @@ pub enum PieceKind {
 }
 
 #[derive(Copy, Clone)]
-pub enum PieceColor {
-    None,
+pub enum Color {
     White,
     Black,
 }
 
 #[derive(Copy, Clone)]
 pub struct Piece {
-    pub kind: PieceKind,
-    pub color: PieceColor
+    pub kind: Kind,
+    pub color: Color
 }
