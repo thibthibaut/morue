@@ -1,5 +1,7 @@
 mod piece;
+mod moves;
 use piece::*;
+use moves::*;
  
 pub struct Board {
 
@@ -17,7 +19,6 @@ fn make_piece(color: Color, kind: Kind) -> Option<Piece> {
 
 impl Board {
     pub fn new() -> Self {
-
 
         let first_rank = [Kind::Rook, Kind::Knight, Kind::Bishop, Kind::Queen, Kind::King, Kind::Bishop, Kind::Knight, Kind::Rook];
 
@@ -40,21 +41,19 @@ impl Board {
 
     pub fn display(&self) {
 
-
+        println!(" ╭───┬───┬───┬───┬───┬───┬───┬───╮"); // Top border
+        
         // we start displaying the last rank
         for rank in (0..8).rev() {
+
+            print!("{}│", rank+1 ); // Display rank number
+
             for file in 0..8 {
 
                 let square = match self.pieces[file + 8* rank ] {
 
                     // If there is no piece here
-                    None => {
-                        match (file+rank) % 2 {
-                            0 => "◼", // Even is dark (bottom corner is 0 -> dark)
-                            1 => "◻", // Odd is a light square
-                            _ => "?"
-                        }
-                    }
+                    None =>  " ",
 
                     // If it's some white piece
                     Some(Piece { color: Color::White, kind: k }) => {
@@ -66,7 +65,7 @@ impl Board {
                             Kind::King => "♔",
                             Kind::Queen => "♕",
                         }
-                    }
+                    },
 
                     // If it's some black piece
                     Some(Piece { color: Color::Black, kind: k }) => {
@@ -81,12 +80,22 @@ impl Board {
                     }
 
                 };
-
-                print!("{} ", square);
+                print!(" {} │", square);
 
             }// end iteration trhu files
-            println!(""); // line break
+            if rank > 0 {
+                println!("\n ├───┼───┼───┼───┼───┼───┼───┼───┤");
+
+            }
+            else {
+                println!(""); // line break
+            }
         }
+
+        println!(" ╰───┴───┴───┴───┴───┴───┴───┴───╯"); // Top border
+        println!("   a   b   c   d   e   f   g   h");
+
+
 
     }
 
