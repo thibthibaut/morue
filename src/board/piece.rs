@@ -1,4 +1,4 @@
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Kind {
     Pawn,
     Knight,
@@ -8,7 +8,7 @@ pub enum Kind {
     King
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Color {
     White,
     Black,
@@ -18,4 +18,11 @@ pub enum Color {
 pub struct Piece {
     pub kind: Kind,
     pub color: Color
+}
+
+pub fn make_piece(color: Color, kind: Kind) -> Option<Piece> {
+    Some(Piece {
+        color,
+        kind
+    })
 }
