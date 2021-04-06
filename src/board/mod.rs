@@ -3,6 +3,11 @@ mod piece;
 use moves::*;
 use piece::*;
 
+struct CastlingRights {
+    long_side: bool,
+    short_side: bool,
+}
+
 pub struct Board {
     // The board is 64 squares containing a piece or not
     pieces: [Option<Piece>; 64],
@@ -11,38 +16,41 @@ pub struct Board {
     // whitePiecesPos: Vec<i32>,
     // blackPiecesPos: Vec<i32>,
     side_to_play: Color,
+    white_castling_rights: CastlingRights,
+    black_castling_rights: CastlingRights,
+    en_passant: Option<i32>,
 }
 
 impl Board {
-    pub fn new() -> Self {
-        let first_rank = [
-            Kind::Rook,
-            Kind::Knight,
-            Kind::Bishop,
-            Kind::Queen,
-            Kind::King,
-            Kind::Bishop,
-            Kind::Knight,
-            Kind::Rook,
-        ];
+    // pub fn new() -> Self {
+    //     let first_rank = [
+    //         Kind::Rook,
+    //         Kind::Knight,
+    //         Kind::Bishop,
+    //         Kind::Queen,
+    //         Kind::King,
+    //         Kind::Bishop,
+    //         Kind::Knight,
+    //         Kind::Rook,
+    //     ];
 
-        let mut init_pieces = [None; 64];
+    //     let mut init_pieces = [None; 64];
 
-        // Initial position
-        for i in 0..8 {
-            init_pieces[i] = make_piece(Color::White, first_rank[i]);
-            init_pieces[i + 7 * 8] = make_piece(Color::Black, first_rank[i]);
-            init_pieces[i + 8] = make_piece(Color::White, Kind::Pawn);
-            init_pieces[i + 6 * 8] = make_piece(Color::Black, Kind::Pawn);
-        }
+    //     // Initial position
+    //     for i in 0..8 {
+    //         init_pieces[i] = make_piece(Color::White, first_rank[i]);
+    //         init_pieces[i + 7 * 8] = make_piece(Color::Black, first_rank[i]);
+    //         init_pieces[i + 8] = make_piece(Color::White, Kind::Pawn);
+    //         init_pieces[i + 6 * 8] = make_piece(Color::Black, Kind::Pawn);
+    //     }
 
-        let board: Board = Board {
-            pieces: init_pieces,
-            side_to_play: Color::White,
-        };
+    //     let board: Board = Board {
+    //         pieces: init_pieces,
+    //         side_to_play: Color::White,
+    //     };
 
-        return board;
-    }
+    //     return board;
+    // }
 
     pub fn from_fen(fen_string: &String) -> Self {
         let splits: Vec<&str> = fen_string.split(' ').collect();
@@ -51,13 +59,12 @@ impl Board {
         let ranks: Vec<&str> = splits[0].split('/').collect();
         //TODO: Test len of ranks
 
-        let mut init_pieces = [None; 64];
+        let mut pieces = [None; 64];
 
         for (rank, rank_str) in ranks.iter().enumerate() {
             let rank = 7 - rank;
             let mut file: usize = 0;
             for c in rank_str.chars() {
-                print!("{}", c);
                 let piece = match c {
                     'p' => make_piece(Color::Black, Kind::Pawn),
                     'n' => make_piece(Color::Black, Kind::Knight),
@@ -77,16 +84,56 @@ impl Board {
                         None
                     }
                 };
-                init_pieces[rank * 8 + file] = piece;
-                print!(" [{}] ", rank * 8 + file);
+                pieces[rank * 8 + file] = piece;
                 file += 1;
             }
-            println!();
         }
 
+        // Parse side to play
+        let side_to_play = match splits[1] {
+            "w" => Color::White,
+            "b" => Color::Black,
+            _ => Color::White,
+        };
+
+        // Parse castling availability
+        let mut white_castling_rights = CastlingRights {
+            long_side: false,
+            short_side: false,
+        };
+        let mut black_castling_rights = CastlingRights {
+            long_side: false,
+            short_side: false,
+        };
+
+        for castle_char in splits[2].chars() {
+            // println!("{}", castle_char);
+            match castle_char {
+                'K' => white_castling_rights.short_side = true,
+                'Q' => white_castling_rights.long_side = true,
+                'k' => black_castling_rights.short_side = true,
+                'q' => black_castling_rights.long_side = true,
+                _ => {}
+            }
+        }
+
+        // Parse en passant possibility
+        let en_passant: Option<i32> = match splits[3] {
+            "_" => None,
+            x => {
+                println!("{}", x);
+                Some(square_from_algebric(&String::from(x)).unwrap())
+                // x.parse().unwrap_or(None);
+            }
+        };
+
+        println!("En passant {:?}", en_passant);
         Board {
-            pieces: init_pieces,
-            side_to_play: Color::White,
+            pieces,
+            side_to_play,
+            white_castling_rights,
+            black_castling_rights,
+            en_passant,
         }
     }
 
@@ -211,5 +258,32 @@ impl Board {
 
         println!(" ╰───┴───┴───┴───┴───┴───┴───┴───╯"); // Top border
         println!("   a   b   c   d   e   f   g   h");
+    }
+}
+
+fn square_from_algebric(algebric: &String) -> Result<i32, &'static str> {
+    // TODO: Refactor this
+    if algebric.len() != 2 {
+        return Err("Algebric notation does not contain 2 characters");
+    }
+
+    let mut square: i32 = 0;
+    let values: Vec<char> = algebric.chars().collect();
+    let file = values[0].to_digit(18);
+
+    if let Some(f) = file {
+        if f < 10 {
+            return Err("File falue is invalid");
+        }
+        square = (f as i32) - 10;
+    } else {
+        return Err("File falue is invalid");
+    }
+
+    let rank = values[1].to_digit(10);
+
+    match rank {
+        None => Err("Rank falue is invalid"),
+        Some(r) => Ok(((r * 8) as i32) + square),
     }
 }
