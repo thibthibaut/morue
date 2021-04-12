@@ -1,3 +1,5 @@
+![CI status](https://github.com/thibthibaut/morue/actions/workflows/morue.yml/badge.svg)
+
 # MORUE
 
 A chess engine and chess AI written in Rust (Work in progress)
