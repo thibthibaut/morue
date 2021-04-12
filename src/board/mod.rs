@@ -52,12 +52,19 @@ impl Board {
     //     return board;
     // }
 
-    pub fn from_fen(fen_string: &String) -> Self {
+    // TODO: Why not using From::String implementation to use casting
+    pub fn from_fen(fen_string: &String) -> Result<Self, &'static str> {
         let splits: Vec<&str> = fen_string.split(' ').collect();
-        //TODO: Test len of splits
+
+        if splits.len() != 6 {
+            return Err("Invalid FEN string");
+        }
 
         let ranks: Vec<&str> = splits[0].split('/').collect();
-        //TODO: Test len of ranks
+
+        if ranks.len() != 8 {
+            return Err("Invalid FEN string");
+        }
 
         let mut pieces = [None; 64];
 
@@ -93,7 +100,7 @@ impl Board {
         let side_to_play = match splits[1] {
             "w" => Color::White,
             "b" => Color::Black,
-            _ => Color::White,
+            _ => return Err("Invalid FEN string: invalid active color, expecting w or b"),
         };
 
         // Parse castling availability
@@ -113,7 +120,7 @@ impl Board {
                 'Q' => white_castling_rights.long_side = true,
                 'k' => black_castling_rights.short_side = true,
                 'q' => black_castling_rights.long_side = true,
-                _ => {}
+                _ => return Err("Invalid FEN string: invalid catling rights"),
             }
         }
 
@@ -121,20 +128,21 @@ impl Board {
         let en_passant: Option<i32> = match splits[3] {
             "_" => None,
             x => {
-                println!("{}", x);
-                Some(square_from_algebric(&String::from(x)).unwrap())
+                match square_from_algebric(&String::from(x)) {
+                    Ok(x) => Some(x),
+                    Err(_) => return Err("Invalid FEN string: invalid en passant string"),
+                }
                 // x.parse().unwrap_or(None);
             }
         };
 
-        println!("En passant {:?}", en_passant);
-        Board {
+        Ok(Board {
             pieces,
             side_to_play,
             white_castling_rights,
             black_castling_rights,
             en_passant,
-        }
+        })
     }
 
     pub fn generate_moves(&self) -> Vec<Move> {
@@ -267,7 +275,7 @@ fn square_from_algebric(algebric: &String) -> Result<i32, &'static str> {
         return Err("Algebric notation does not contain 2 characters");
     }
 
-    let mut square: i32 = 0;
+    let mut square: i32;
     let values: Vec<char> = algebric.chars().collect();
     let file = values[0].to_digit(18);
 
