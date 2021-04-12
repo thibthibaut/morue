@@ -1,4 +1,4 @@
-![CI status](https://github.com/thibthibaut/morue/actions/workflows/morue.yml/badge.svg)
+[![Rust](https://github.com/thibthibaut/morue/actions/workflows/rust.yml/badge.svg)](https://github.com/thibthibaut/morue/actions/workflows/rust.yml)
 
 # MORUE
 
