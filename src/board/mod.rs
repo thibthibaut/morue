@@ -15,7 +15,7 @@ pub struct Board {
     // Store positions of whites pieces and black pieces for fast lookup
     // whitePiecesPos: Vec<i32>,
     // blackPiecesPos: Vec<i32>,
-    side_to_play: Color,
+    turn: Color,
     white_castling_rights: CastlingRights,
     black_castling_rights: CastlingRights,
     en_passant: Option<i32>,
@@ -46,7 +46,7 @@ impl Board {
 
     //     let board: Board = Board {
     //         pieces: init_pieces,
-    //         side_to_play: Color::White,
+    //         turn: Color::White,
     //     };
 
     //     return board;
@@ -97,7 +97,7 @@ impl Board {
         }
 
         // Parse side to play
-        let side_to_play = match splits[1] {
+        let turn = match splits[1] {
             "w" => Color::White,
             "b" => Color::Black,
             _ => return Err("Invalid FEN string: invalid active color, expecting w or b"),
@@ -120,13 +120,15 @@ impl Board {
                 'Q' => white_castling_rights.long_side = true,
                 'k' => black_castling_rights.short_side = true,
                 'q' => black_castling_rights.long_side = true,
+                '-' => {}
                 _ => return Err("Invalid FEN string: invalid catling rights"),
             }
         }
 
         // Parse en passant possibility
+        println!("->>>>>>>>>>>>>>>  [{}]", splits[3]);
         let en_passant: Option<i32> = match splits[3] {
-            "_" => None,
+            "-" => None,
             x => {
                 match square_from_algebric(&String::from(x)) {
                     Ok(x) => Some(x),
@@ -138,7 +140,7 @@ impl Board {
 
         Ok(Board {
             pieces,
-            side_to_play,
+            turn,
             white_castling_rights,
             black_castling_rights,
             en_passant,
@@ -153,7 +155,7 @@ impl Board {
             // If we indeed have a piece at that position
             if let Some(p) = piece {
                 // Test if current piece if of color to play
-                if p.color == self.side_to_play {
+                if p.color == self.turn {
                     // Generate moves for each piece
 
                     match p.kind {
@@ -167,11 +169,12 @@ impl Board {
                             let rank = square / 8;
 
                             // Let's see what is just if front of us
-                            let target_square = (square + direction_offset) as usize;
+                            let target_square = (square + direction_offset);
 
                             // If there is no piece blocking the move
-                            if self.pieces[target_square].is_none() {
+                            if self.pieces[target_square as usize].is_none() {
                                 let target_square = target_square as i32;
+
                                 // If we're on the last rank
                                 if rank == promotion_rank {
                                     moves.push(Move::new_with_promotion(
@@ -206,7 +209,34 @@ impl Board {
                                         moves.push(Move::new(square, target_square as i32));
                                     }
                                 }
+
                             }
+
+                                // Handle captures
+                                // Captures are +-1 from target square
+                                let opposite_color = self.turn.opposite();
+                                if (target_square % 8) != 0 {
+                                    // check boundary
+                                    let capture_square = target_square - 1;
+                                    if let Some(p) = self.pieces[capture_square as usize] {
+                                        if p.color == opposite_color {
+                                            moves.push(Move::new(square, capture_square));
+                                        }
+                                    }
+                                }
+                                if (target_square % 8) != 7 {
+                                    // check boundary
+                                    let capture_square = target_square + 1;
+                                    if let Some(p) = self.pieces[capture_square as usize] {
+                                        if p.color == opposite_color {
+                                            moves.push(Move::new(square, capture_square));
+                                        }
+                                    }
+                                }
+                                // End capture handling
+
+
+
                         } // End of pawn move
                         _ => {}
                     }
@@ -255,7 +285,11 @@ impl Board {
                         Kind::Queen => "♛",
                     },
                 };
-                print!(" {} │", square);
+                if square == " " {
+                    print!("{:^3}│", file + 8 * rank);
+                } else {
+                    print!(" {} │", square);
+                }
             } // end iteration trhu files
             if rank > 0 {
                 println!("\n ├───┼───┼───┼───┼───┼───┼───┼───┤");

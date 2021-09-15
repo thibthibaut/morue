@@ -5,7 +5,7 @@ pub enum Kind {
     Bishop,
     Rook,
     Queen,
-    King
+    King,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -17,12 +17,19 @@ pub enum Color {
 #[derive(Copy, Clone)]
 pub struct Piece {
     pub kind: Kind,
-    pub color: Color
+    pub color: Color,
 }
 
 pub fn make_piece(color: Color, kind: Kind) -> Option<Piece> {
-    Some(Piece {
-        color,
-        kind
-    })
+    Some(Piece { color, kind })
+}
+
+impl Color {
+    pub fn opposite(&self) -> Self {
+        if *self == Color::Black {
+            Color::White
+        } else {
+            Color::Black
+        }
+    }
 }
