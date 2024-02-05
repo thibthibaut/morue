@@ -126,7 +126,6 @@ impl Board {
         }
 
         // Parse en passant possibility
-        println!("->>>>>>>>>>>>>>>  [{}]", splits[3]);
         let en_passant: Option<i32> = match splits[3] {
             "-" => None,
             x => {
@@ -152,97 +151,12 @@ impl Board {
 
         // Loop over pieces (TODO: Optimize this !)
         for (square, piece) in self.pieces.iter().enumerate() {
-            // If we indeed have a piece at that position
             if let Some(p) = piece {
-                // Test if current piece if of color to play
                 if p.color == self.turn {
-                    // Generate moves for each piece
-
-                    match p.kind {
-                        Kind::Pawn => {
-                            let promotion_rank = if p.color == Color::White { 6 } else { 1 };
-                            let start_rank = if p.color == Color::White { 1 } else { 6 };
-                            let direction_offset: i32 =
-                                if p.color == Color::White { 8 } else { -8 };
-
-                            let square = square as i32;
-                            let rank = square / 8;
-
-                            // Let's see what is just if front of us
-                            let target_square = (square + direction_offset);
-
-                            // If there is no piece blocking the move
-                            if self.pieces[target_square as usize].is_none() {
-                                let target_square = target_square as i32;
-
-                                // If we're on the last rank
-                                if rank == promotion_rank {
-                                    moves.push(Move::new_with_promotion(
-                                        square,
-                                        target_square,
-                                        Some(Kind::Queen),
-                                    ));
-                                    moves.push(Move::new_with_promotion(
-                                        square,
-                                        target_square,
-                                        Some(Kind::Rook),
-                                    ));
-                                    moves.push(Move::new_with_promotion(
-                                        square,
-                                        target_square,
-                                        Some(Kind::Bishop),
-                                    ));
-                                    moves.push(Move::new_with_promotion(
-                                        square,
-                                        target_square,
-                                        Some(Kind::Knight),
-                                    ));
-                                } else {
-                                    // Normal case
-                                    moves.push(Move::new(square, target_square));
-                                }
-
-                                // Handle 2 square move on start rank
-                                if rank == start_rank {
-                                    let target_square = (square + 2 * direction_offset) as usize;
-                                    if self.pieces[target_square].is_none() {
-                                        moves.push(Move::new(square, target_square as i32));
-                                    }
-                                }
-
-                            }
-
-                                // Handle captures
-                                // Captures are +-1 from target square
-                                let opposite_color = self.turn.opposite();
-                                if (target_square % 8) != 0 {
-                                    // check boundary
-                                    let capture_square = target_square - 1;
-                                    if let Some(p) = self.pieces[capture_square as usize] {
-                                        if p.color == opposite_color {
-                                            moves.push(Move::new(square, capture_square));
-                                        }
-                                    }
-                                }
-                                if (target_square % 8) != 7 {
-                                    // check boundary
-                                    let capture_square = target_square + 1;
-                                    if let Some(p) = self.pieces[capture_square as usize] {
-                                        if p.color == opposite_color {
-                                            moves.push(Move::new(square, capture_square));
-                                        }
-                                    }
-                                }
-                                // End capture handling
-
-
-
-                        } // End of pawn move
-                        _ => {}
-                    }
+                    generate_moves(p, square as i32, self, &mut moves);
                 }
             }
-        }
+        } // End loop over pieces
 
         return moves;
     }
@@ -287,6 +201,7 @@ impl Board {
                 };
                 if square == " " {
                     print!("{:^3}│", file + 8 * rank);
+                    //print!("   |");
                 } else {
                     print!(" {} │", square);
                 }
